@@ -139,6 +139,37 @@
                     .style("opacity", 1);
             }
 
+            // Legend
+
+            const legend = svg.append("g")
+        .attr("transform", `translate(${width + margin.left + 10}, ${margin.top})`);
+
+            legend.append("circle")
+                .attr("cx", 0)
+                .attr("cy", 0)
+                .attr("r", 5)
+                .style("fill", "#1f77b4");
+
+            legend.append("text")
+                .attr("x", 10)
+                .attr("y", 5)
+                .text("Male")
+                .style("font-size", "12px")
+                .attr("alignment-baseline","middle");
+
+            legend.append("circle")
+                .attr("cx", 0)
+                .attr("cy", 20)
+                .attr("r", 5)
+                .style("fill", "#e377c2");
+
+            legend.append("text")
+                .attr("x", 10)
+                .attr("y", 25)
+                .text("Female")
+                .style("font-size", "12px")
+                .attr("alignment-baseline","middle");
+
             return { highlightPoints, resetPoints };
         };
 
