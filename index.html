@@ -167,6 +167,26 @@
 
             const barWidth = x.bandwidth() / 2;
 
+            // Function to highlight bars based on gender
+            function highlightBars(gender) {
+                g.selectAll(".bar-quality")
+                    .transition().duration(200)
+                    .style("opacity", d => d.key === gender ? 1 : 0.2);
+                g.selectAll(".bar-duration")
+                    .transition().duration(200)
+                    .style("opacity", d => d.key === gender ? 1 : 0.2);
+            }
+
+            // Function to reset bars opacity
+            function resetBars() {
+                g.selectAll(".bar-quality")
+                    .transition().duration(200)
+                    .style("opacity", 1);
+                g.selectAll(".bar-duration")
+                    .transition().duration(200)
+                    .style("opacity", 1);
+            }
+
             // Bar for average sleep quality
             g.selectAll(".bar-quality")
                 .data(avgDataArray)
@@ -180,6 +200,7 @@
                 .on("click", function(event, d) {
                     event.stopPropagation(); // Prevent this event from bubbling up to the body
                     scatterPlotObj.highlightPoints(d.key);
+                    highlightBars(d.key);
                 });
 
 
@@ -196,6 +217,7 @@
                 .on("click", function(event, d) {
                     event.stopPropagation(); // Prevent this event from bubbling up to the body
                     scatterPlotObj.highlightPoints(d.key);
+                    highlightBars(d.key);
                 });
 
             // X Axis Label
@@ -211,24 +233,27 @@
                 .attr("x", - (margin.top + height / 2))
                 .attr("dy", "1em")
                 .style("text-anchor", "middle")
-                .text("Sleep duration and quality (scale 1-10)");
+                .text("Average sleep duration and quality");
 
             // Legend
             svg.append("rect").attr("x", width - 100).attr("y", 10).attr("width", 10).attr("height", 10).style("fill", "#1f77b4");
             svg.append("text").attr("x", width - 85).attr("y", 20).text("Sleep Quality").style("font-size", "12px").attr("alignment-baseline","middle");
             svg.append("rect").attr("x", width - 100).attr("y", 30).attr("width", 10).attr("height", 10).style("fill", "#ff7f0e");
             svg.append("text").attr("x", width - 85).attr("y", 40).text("Sleep Duration").style("font-size", "12px").attr("alignment-baseline","middle");
+
+            return { highlightBars, resetBars };
         };
 
         // Render Scatter Plot for Scene 1
         const scatterPlotObj = scatterPlot(data, 'sleepDuration', 'sleepQuality', 'gender', '#scatterplot');
 
         // Render Bar Chart for Scene 1
-        barChart(data, '#barchart', scatterPlotObj);
+        const barChartObj = barChart(data, '#barchart', scatterPlotObj);
 
         // Add event listener to reset points when clicking outside bars
         document.body.addEventListener('click', function() {
             scatterPlotObj.resetPoints();
+            barChartObj.resetBars();
         });
 
         
