@@ -133,7 +133,13 @@
                     .style("opacity", d => d.gender === gender ? 1 : 0.2);
             }
 
-            return { highlightPoints };
+            // reset opacity of all points
+            function resetPoints() {
+                dots.transition().duration(200)
+                    .style("opacity", 1);
+            }
+
+            return { highlightPoints, resetPoints };
         };
 
         const barChart = (data, elementId) => {
@@ -172,6 +178,7 @@
                 .attr("height", d => height - y0(d.avgSleepQuality))
                 .attr("fill", "#1f77b4")
                 .on("click", function(event, d) {
+                    event.stopPropagation(); // Prevent this event from bubbling up to the body
                     scatterPlotObj.highlightPoints(d.key);
                 });
 
@@ -187,6 +194,7 @@
                 .attr("height", d => height - y1(d.avgSleepDuration))
                 .attr("fill", "#ff7f0e")
                 .on("click", function(event, d) {
+                    event.stopPropagation(); // Prevent this event from bubbling up to the body
                     scatterPlotObj.highlightPoints(d.key);
                 });
 
@@ -213,10 +221,15 @@
         };
 
         // Render Scatter Plot for Scene 1
-        scatterPlot(data, 'sleepDuration', 'sleepQuality', 'gender', '#scatterplot');
+        const scatterPlotObj = scatterPlot(data, 'sleepDuration', 'sleepQuality', 'gender', '#scatterplot');
 
         // Render Bar Chart for Scene 1
-        barChart(data, '#barchart');
+        barChart(data, '#barchart', scatterPlotObj);
+
+        // Add event listener to reset points when clicking outside bars
+        document.body.addEventListener('click', function() {
+            scatterPlotObj.resetPoints();
+        });
 
         
 
