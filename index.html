@@ -69,7 +69,7 @@
 
             const tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
 
-            g.selectAll(".dot")
+            const dots = g.selectAll(".dot")
                 .data(data)
                 .enter().append("circle")
                 .attr("class", "dot")
@@ -126,6 +126,14 @@
                 .annotations(annotations);
 
             svg.append("g").attr("class", "annotation-group").call(makeAnnotations);
+
+            // highlight points based on gender selected in bar chart
+            function highlightPoints(gender) {
+                dots.transition().duration(200)
+                    .style("opacity", d => d.gender === gender ? 1 : 0.2);
+            }
+
+            return { highlightPoints };
         };
 
         const barChart = (data, elementId) => {
@@ -162,7 +170,11 @@
                 .attr("y", d => y0(d.avgSleepQuality))
                 .attr("width", barWidth)
                 .attr("height", d => height - y0(d.avgSleepQuality))
-                .attr("fill", "#1f77b4");
+                .attr("fill", "#1f77b4")
+                .on("click", function(event, d) {
+                    scatterPlotObj.highlightPoints(d.key);
+                });
+
 
             // Bar for average sleep duration
             g.selectAll(".bar-duration")
@@ -173,7 +185,10 @@
                 .attr("y", d => y1(d.avgSleepDuration))
                 .attr("width", barWidth)
                 .attr("height", d => height - y1(d.avgSleepDuration))
-                .attr("fill", "#ff7f0e");
+                .attr("fill", "#ff7f0e")
+                .on("click", function(event, d) {
+                    scatterPlotObj.highlightPoints(d.key);
+                });
 
             // X Axis Label
             svg.append("text")
