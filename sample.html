@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sleep Health Visualization</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://d3-annotation.susielu.com/d3-annotation.min.js"></script>
+    <script src="https://d3js.org/topojson.v1.min.js"></script>
+    <style>
+        .chart-container {
+            margin: 20px;
+        }
+        .annotation-group {
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="scene1"></div>
+    <div id="scene2"></div>
+    <div id="scene3"></div>
+    <script>
+        // Scatter plot function
+const scatterPlot = (data, xField, yField, colorField, elementId) => {
+    const svg = d3.select(elementId).append("svg").attr("width", 600).attr("height", 400);
+    const margin = { top: 20, right: 30, bottom: 40, left: 40 };
+    const width = +svg.attr("width") - margin.left - margin.right;
+    const height = +svg.attr("height") - margin.top - margin.bottom;
+
+    const x = d3.scaleLinear().domain(d3.extent(data, d => d[xField])).range([0, width]);
+    const y = d3.scaleLinear().domain(d3.extent(data, d => d[yField])).range([height, 0]);
+
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    g.append("g").call(d3.axisLeft(y));
+    g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
+
+    g.selectAll(".dot")
+        .data(data)
+        .enter().append("circle")
+        .attr("cx", d => x(d[xField]))
+        .attr("cy", d => y(d[yField]))
+        .attr("r", 5)
+        .style("fill", d => colorField ? d3.schemeCategory10[d[colorField]] : "blue");
+
+    // Example Annotations
+    const annotations = [
+        {
+            note: { label: "High sleep quality", title: "Good Sleep" },
+            x: x(8), y: y(9),
+            dx: 30, dy: -30
+        },
+        {
+            note: { label: "Low sleep quality", title: "Poor Sleep" },
+            x: x(6), y: y(4),
+            dx: 30, dy: -30
+        }
+    ];
+    
+    const makeAnnotations = d3.annotation().annotations(annotations);
+    g.append("g").call(makeAnnotations);
+};
+
+// Bar chart function
+const barChart = (data, xField, yField, elementId) => {
+    const svg = d3.select(elementId).append("svg").attr("width", 600).attr("height", 400);
+    const margin = { top: 20, right: 30, bottom: 40, left: 40 };
+    const width = +svg.attr("width") - margin.left - margin.right;
+    const height = +svg.attr("height") - margin.top - margin.bottom;
+
+    const x = d3.scaleBand().domain(data.map(d => d[xField])).range([0, width]).padding(0.1);
+    const y = d3.scaleLinear().domain([0, d3.max(data, d => d[yField])]).range([height, 0]);
+
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    g.append("g").call(d3.axisLeft(y));
+    g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
+
+    g.selectAll(".bar")
+        .data(data)
+        .enter().append("rect")
+        .attr("class", "bar")
+        .attr("x", d => x(d[xField]))
+        .attr("y", d => y(d[yField]))
+        .attr("width", x.bandwidth())
+        .attr("height", d => height - y(d[yField]))
+        .on("click", function(event, d) {
+            // Highlight points in scatter plot
+            d3.selectAll(".dot")
+                .style("opacity", p => p[xField] === d[xField] ? 1 : 0.1);
+        });
+
+    // Example Annotations
+    const annotations = [
+        {
+            note: { label: "Highest average quality", title: "Top Quality" },
+            x: x(data[0][xField]), y: y(data[0][yField]),
+            dx: 30, dy: -30
+        }
+    ];
+
+    const makeAnnotations = d3.annotation().annotations(annotations);
+    g.append("g").call(makeAnnotations);
+};
+
+// Example data
+const data = [
+    { sleepDuration: 7, sleepQuality: 8, gender: 0, occupation: 1, age: 30 },
+    { sleepDuration: 6, sleepQuality: 5, gender: 1, occupation: 2, age: 40 },
+    { sleepDuration: 8, sleepQuality: 9, gender: 0, occupation: 3, age: 50 },
+    { sleepDuration: 5, sleepQuality: 4, gender: 1, occupation: 1, age: 60 }
+];
+
+// Render Scene 1
+scatterPlot(data, 'sleepDuration', 'sleepQuality', 'gender', '#scene1');
+barChart(data, 'gender', 'sleepQuality', '#scene1');
+
+// Render Scene 2
+scatterPlot(data, 'sleepDuration', 'sleepQuality', 'occupation', '#scene2');
+barChart(data, 'occupation', 'sleepQuality', '#scene2');
+
+// Render Scene 3
+scatterPlot(data, 'sleepDuration', 'sleepQuality', 'age', '#scene3');
+barChart(data, 'age', 'sleepQuality', '#scene3');
+
+// Add click event for scatter plot points
+d3.selectAll(".dot").on("click", function(event, d) {
+    // Show user info (for example, in a tooltip or sidebar)
+    const userInfo = `
+        Gender: ${d.gender}
+        Occupation: ${d.occupation}
+        Age: ${d.age}
+        Sleep Duration: ${d.sleepDuration}
+        Sleep Quality: ${d.sleepQuality}
+    `;
+    alert(userInfo); // Replace with a more sophisticated display
+});
+    </script>
+    
+</body>
+</html>
