@@ -97,7 +97,7 @@
                 .attr("x", - (margin.top + height / 2))
                 .attr("dy", "1em")
                 .style("text-anchor", "middle")
-                .text("Sleep Quality (scale 1-10)");
+                .text("Sleep Quality (scale 0-10)");
 
             const tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
 
@@ -282,9 +282,9 @@
 
             // Legend
             svg.append("rect").attr("x", width - 100).attr("y", 10).attr("width", 10).attr("height", 10).style("fill", "#1f77b4");
-            svg.append("text").attr("x", width - 85).attr("y", 20).text("Sleep Quality").style("font-size", "12px").attr("alignment-baseline","middle");
+            svg.append("text").attr("x", width - 85).attr("y", 20).text("Sleep Quality (0-10 scale)").style("font-size", "12px").attr("alignment-baseline","middle");
             svg.append("rect").attr("x", width - 100).attr("y", 30).attr("width", 10).attr("height", 10).style("fill", "#ff7f0e");
-            svg.append("text").attr("x", width - 85).attr("y", 40).text("Sleep Duration").style("font-size", "12px").attr("alignment-baseline","middle");
+            svg.append("text").attr("x", width - 85).attr("y", 40).text("Sleep Duration (hours)").style("font-size", "12px").attr("alignment-baseline","middle");
 
             return { highlightBars, resetBars };
         };
