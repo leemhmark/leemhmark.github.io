@@ -122,23 +122,18 @@
             const annotations = [
                 {
                     note: {
-                        label: "High sleep quality and duration",
-                        title: "Good Sleep"
+                        label: "Wide range of sleep duration for same reported quality",
+                        title: "Sleep Duration"
                     },
-                    x: x(8), // Use scale for positioning
-                    y: y(9),
-                    dy: -50,
-                    dx: 50
-                },
-                {
-                    note: {
-                        label: "Low sleep quality and duration",
-                        title: "Poor Sleep"
+                    type: d3.annotationCalloutRect,
+                    subject: {
+                        width: 200,
+                        height: 140
                     },
-                    x: x(5), // Use scale for positioning
-                    y: y(4),
-                    dy: -50,
-                    dx: -50
+                    x: x(6.5), // Use scale for positioning
+                    y: y(8),
+                    dy: -40,
+                    dx: -5
                 }
             ];
 
@@ -151,7 +146,7 @@
             // Function to highlight points based on gender
             function highlightPoints(gender) {
                 dots.transition().duration(200)
-                    .style("opacity", d => d.gender === gender ? 1 : 0.2);
+                    .style("opacity", d => d.gender === gender ? 1 : 0.05);
             }
 
             // Function to reset points opacity
