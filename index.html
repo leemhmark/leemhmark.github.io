@@ -118,11 +118,20 @@
             ];
 
             const makeAnnotations = d3.annotation()
-        .accessors({
-            x: function(d){ return x(d.x) + margin.left; },
-            y: function(d){ return y(d.y) + margin.top; }
-        })
-        .annotations(annotations);
+            .accessors({
+                x: function(d){ return x(d.x) + margin.left; },
+                y: function(d){ return y(d.y) + margin.top; }
+            })
+            .annotations(annotations);
+
+            const annotationGroup = svg.append("g")
+                .attr("class", "annotation-group")
+                .call(makeAnnotations);
+
+            // Set pointer-events to none for the annotations
+            annotationGroup.selectAll(".annotation")
+                .style("pointer-events", "none");
+
 
     svg.append("g")
         .attr("class", "annotation-group")
