@@ -28,19 +28,51 @@
     </style>
 </head>
 <body>
+    <!-- Create a div where the scatter plot will take place -->
     <div id="scatterplot" class="chart-container"></div>
+    <!-- Create a div where the bar chart will take place -->
     <div id="barchart" class="chart-container"></div>
     <script>
-        const data = [
-            { personId: 1, sleepDuration: 7, sleepQuality: 8, gender: "male", occupation: 1, age: 30 },
-            { personId: 2, sleepDuration: 6, sleepQuality: 5, gender: "female", occupation: 2, age: 40 },
-            { personId: 3, sleepDuration: 8, sleepQuality: 9, gender: "male", occupation: 3, age: 50 },
-            { personId: 4, sleepDuration: 5, sleepQuality: 4, gender: "female", occupation: 1, age: 60 }
-        ];
+        d3.csv("https://leemhmark.github.io/data/sleep_dataset.csv").then(function(data) {
+            // Parse data
+            const parsedData = data.map(d => ({
+                personId: +d["Person ID"],
+                gender: d["Gender"].toLowerCase(),
+                age: +d["Age"],
+                occupation: d["Occupation"],
+                sleepDuration: +d["Sleep Duration"],
+                sleepQuality: +d["Quality of Sleep"],
+                physicalActivityLevel: +d["Physical Activity Level"],
+                stressLevel: +d["Stress Level"],
+                bmiCategory: d["BMI Category"],
+                bloodPressure: d["Blood Pressure"],
+                heartRate: +d["Heart Rate"],
+                dailySteps: +d["Daily Steps"],
+                sleepDisorder: d["Sleep Disorder"]
+            }));
+
+            // Debugging: Log the parsed data to console
+            console.log(parsedData);
+
+            // Render Scatter Plot for Scene 1
+            const scatterPlotObj = scatterPlot(parsedData, 'sleepDuration', 'sleepQuality', 'gender', '#scatterplot');
+
+            // Render Bar Chart for Scene 1
+            const barChartObj = barChart(parsedData, '#barchart', scatterPlotObj);
+
+            // Add event listener to reset points and bars when clicking outside bars
+            document.body.addEventListener('click', function() {
+                scatterPlotObj.resetPoints();
+                barChartObj.resetBars();
+            });
+        }).catch(function(error) {
+            // Debugging: Log the error if the CSV fails to load
+            console.error('Error loading or parsing the CSV file:', error);
+        });
 
         const scatterPlot = (data, xField, yField, colorField, elementId) => {
             const svg = d3.select(elementId).append("svg").attr("width", 600).attr("height", 400);
-            const margin = { top: 20, right: 30, bottom: 40, left: 45 };
+            const margin = { top: 20, right: 30, bottom: 60, left: 70 };
             const width = svg.attr("width") - margin.left - margin.right;
             const height = svg.attr("height") - margin.top - margin.bottom;
 
@@ -52,8 +84,8 @@
             g.append("g").call(d3.axisLeft(y));
             g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
 
-             // X Axis Label
-             svg.append("text")
+            // X Axis Label
+            svg.append("text")
                 .attr("transform", `translate(${margin.left + width / 2}, ${margin.top + height + 40})`)
                 .style("text-anchor", "middle")
                 .text("Sleep Duration (hours)");
@@ -86,20 +118,15 @@
                     tooltip.transition().duration(500).style("opacity", 0);
                 });
 
-            // Features of the annotations
+            // Add annotation to the chart
             const annotations = [
                 {
                     note: {
                         label: "High sleep quality and duration",
                         title: "Good Sleep"
                     },
-                    type: d3.annotationCalloutRect,
-                    subject: {
-                        width: 60,
-                        height: 60
-                    },
                     x: x(8), // Use scale for positioning
-                    y: y(8.5),
+                    y: y(9),
                     dy: -50,
                     dx: 50
                 },
@@ -108,41 +135,34 @@
                         label: "Low sleep quality and duration",
                         title: "Poor Sleep"
                     },
-                    type: d3.annotationCalloutRect,
-                    subject: {
-                        width: 60,
-                        height: 60
-                    },
-                    x: x(6), // Use scale for positioning
-                    y: y(5),
+                    x: x(5), // Use scale for positioning
+                    y: y(4),
                     dy: -50,
-                    dx: -20
+                    dx: -50
                 }
             ];
 
-            // Add annotation to the chart
             const makeAnnotations = d3.annotation()
                 .type(d3.annotationLabel) // Ensure the type is set correctly
                 .annotations(annotations);
 
             svg.append("g").attr("class", "annotation-group").call(makeAnnotations);
 
-            // highlight points based on gender selected in bar chart
+            // Function to highlight points based on gender
             function highlightPoints(gender) {
                 dots.transition().duration(200)
                     .style("opacity", d => d.gender === gender ? 1 : 0.2);
             }
 
-            // reset opacity of all points
+            // Function to reset points opacity
             function resetPoints() {
                 dots.transition().duration(200)
                     .style("opacity", 1);
             }
 
-            // Legend
-
+            // Add legend
             const legend = svg.append("g")
-        .attr("transform", `translate(${width + margin.left + 10}, ${margin.top})`);
+                .attr("transform", `translate(${width + margin.left + 10}, ${margin.top})`);
 
             legend.append("circle")
                 .attr("cx", 0)
@@ -173,7 +193,7 @@
             return { highlightPoints, resetPoints };
         };
 
-        const barChart = (data, elementId) => {
+        const barChart = (data, elementId, scatterPlotObj) => {
             const svg = d3.select(elementId).append("svg").attr("width", 600).attr("height", 300);
             const margin = { top: 20, right: 30, bottom: 60, left: 70 };
             const width = svg.attr("width") - margin.left - margin.right;
@@ -187,7 +207,7 @@
 
             const avgDataArray = Array.from(avgData, ([key, value]) => ({ key, ...value }));
 
-            const x = d3.scaleBand().domain(avgDataArray.map(d => d.key)).range([0, width]).padding(0.3);
+            const x = d3.scaleBand().domain(avgDataArray.map(d => d.key)).range([0, width]).padding(0.3);  // Increase padding for narrower bars
             const y0 = d3.scaleLinear().domain([0, 10]).range([height, 0]); // Sleep quality scale
             const y1 = d3.scaleLinear().domain([0, 10]).range([height, 0]); // Sleep duration scale
 
@@ -196,7 +216,7 @@
             g.append("g").call(d3.axisLeft(y0));
             g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
 
-            const barWidth = x.bandwidth() / 2;
+            const barWidth = x.bandwidth() / 3;  // Adjust bar width for narrower bars
 
             // Function to highlight bars based on gender
             function highlightBars(gender) {
@@ -234,13 +254,12 @@
                     highlightBars(d.key);
                 });
 
-
             // Bar for average sleep duration
             g.selectAll(".bar-duration")
                 .data(avgDataArray)
                 .enter().append("rect")
                 .attr("class", "bar-duration")
-                .attr("x", d => x(d.key) + barWidth + 5)  // add space between bars
+                .attr("x", d => x(d.key) + barWidth + 5)  // Add space between the bars
                 .attr("y", d => y1(d.avgSleepDuration))
                 .attr("width", barWidth)
                 .attr("height", d => height - y1(d.avgSleepDuration))
@@ -264,7 +283,7 @@
                 .attr("x", - (margin.top + height / 2))
                 .attr("dy", "1em")
                 .style("text-anchor", "middle")
-                .text("Average sleep duration and quality");
+                .text("Average Values (scale 1-10)");
 
             // Legend
             svg.append("rect").attr("x", width - 100).attr("y", 10).attr("width", 10).attr("height", 10).style("fill", "#1f77b4");
@@ -274,24 +293,6 @@
 
             return { highlightBars, resetBars };
         };
-
-        // Render Scatter Plot for Scene 1
-        const scatterPlotObj = scatterPlot(data, 'sleepDuration', 'sleepQuality', 'gender', '#scatterplot');
-
-        // Render Bar Chart for Scene 1
-        const barChartObj = barChart(data, '#barchart', scatterPlotObj);
-
-        // Add event listener to reset points when clicking outside bars
-        document.body.addEventListener('click', function() {
-            scatterPlotObj.resetPoints();
-            barChartObj.resetBars();
-        });
-
-        
-
     </script>
 </body>
 </html>
-
-
-
