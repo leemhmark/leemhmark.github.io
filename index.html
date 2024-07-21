@@ -99,25 +99,6 @@
                 .style("text-anchor", "middle")
                 .text("Sleep Quality (scale 0-10)");
 
-            const tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
-
-            const dots = g.selectAll(".dot")
-                .data(data)
-                .enter().append("circle")
-                .attr("class", "dot")
-                .attr("cx", d => x(d[xField]))
-                .attr("cy", d => y(d[yField]))
-                .attr("r", 5)
-                .style("fill", function(d) { return d[colorField] === "male" ? "#1f77b4" : "#e377c2"; })
-                .on("mouseover", function(event, d) {
-                    tooltip.transition().duration(200).style("opacity", .9);
-                    tooltip.html(`Person ID: ${d.personId}<br>Gender: ${d.gender}<br>Occupation: ${d.occupation}<br>Age: ${d.age}<br>Sleep Duration: ${d.sleepDuration}<br>Sleep Quality: ${d.sleepQuality}`)
-                           .style("left", (event.pageX + 5) + "px").style("top", (event.pageY - 28) + "px");
-                })
-                .on("mouseout", function(d) {
-                    tooltip.transition().duration(500).style("opacity", 0);
-                });
-
             // Add annotation to the chart
             const annotations = [
                 {
@@ -137,10 +118,43 @@
             ];
 
             const makeAnnotations = d3.annotation()
-                .type(d3.annotationLabel) // Ensure the type is set correctly
-                .annotations(annotations);
+        .accessors({
+            x: function(d){ return x(d.x) + margin.left; },
+            y: function(d){ return y(d.y) + margin.top; }
+        })
+        .annotations(annotations);
 
-            svg.append("g").attr("class", "annotation-group").call(makeAnnotations);
+    svg.append("g")
+        .attr("class", "annotation-group")
+        .call(makeAnnotations)
+        .selectAll("rect");
+
+        d3.selectAll("rect")
+        .on("mouseover", () => {
+        console.log("HOVER");
+        });
+
+    const tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
+
+    const dots = g.selectAll(".dot")
+        .data(data)
+        .enter().append("circle")
+        .attr("class", "dot")
+        .attr("cx", d => x(d[xField]))
+        .attr("cy", d => y(d[yField]))
+        .attr("r", 5)
+        .style("fill", function(d) { return d[colorField] === "male" ? "#1f77b4" : "#e377c2"; })
+        .on("mouseover", function(event, d) {
+            tooltip.transition().duration(200).style("opacity", .9);
+            tooltip.html(`Person ID: ${d.personId}<br>Gender: ${d.gender}<br>Occupation: ${d.occupation}<br>Age: ${d.age}<br>Sleep Duration: ${d.sleepDuration}<br>Sleep Quality: ${d.sleepQuality}`)
+                   .style("left", (event.pageX + 5) + "px").style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", function(d) {
+            tooltip.transition().duration(500).style("opacity", 0);
+        });
+
+        dots.raise()
+
 
             // Function to highlight points based on gender
             function highlightPoints(gender) {
