@@ -62,8 +62,11 @@
 
             // Add event listener to reset points and bars when clicking outside bars
             document.body.addEventListener('click', function() {
-                scatterPlotObj.resetPoints();
-                barChartObj.resetBars();
+                // Check if the click event is not on a bar or circle
+                if (!event.target.closest('.bar-quality') && !event.target.closest('.bar-duration') && !event.target.closest('.dot')) {
+                    scatterPlotObj.resetPoints();
+                    barChartObj.resetBars();
+                }
             });
         }).catch(function(error) {
             // Debugging: Log the error if the CSV fails to load
@@ -265,44 +268,14 @@
                 .style("text-anchor", "middle")
                 .text("Average Sleep Duration and Quality");
 
+
             // Legend
             g.append("rect").attr("x", width - 180).attr("y", -20).attr("width", 10).attr("height", 10).style("fill", "#1f77b4");
             g.append("text").attr("x", width - 165).attr("y", -10).text("Sleep Quality (0-10 scale)").style("font-size", "12px").attr("alignment-baseline","middle");
             g.append("rect").attr("x", width - 180).attr("y", 0).attr("width", 10).attr("height", 10).style("fill", "#ff7f0e");
             g.append("text").attr("x", width - 165).attr("y", 10).text("Sleep Duration (hours)").style("font-size", "12px").attr("alignment-baseline","middle");
 
-             // Add annotation to bar chart
-    const annotations = [
-        {
-            note: {
-                label: "Slightly higher sleep quality for females",
-                
-            },
-            type: d3.annotationCalloutRect,
-            subject: {
-                width: 150,
-                height: 50
-            },
-            x: x("female") + margin.left - 20,
-            y: y0(avgDataArray.find(d => d.key === "female").avgSleepQuality) + margin.top,
-            dy: -20,
-            dx: -20
-        }
-    ];
-
-    const makeAnnotations = d3.annotation()
-        .accessors({
-            x: function(d){ return d.x; },
-            y: function(d){ return d.y; }
-        })
-        .annotations(annotations);
-
-    svg.append("g")
-        .attr("class", "annotation-group")
-        .call(makeAnnotations);
-
-            
-
+             
             return { highlightBars, resetBars };
         };
     </script>
