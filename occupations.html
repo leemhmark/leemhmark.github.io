@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+    <title>Scene 2: Occupation vs Sleep Quality and Duration</title>
+    <!-- Load d3.js -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <!-- Load d3-annotation -->
+    <script src="https://unpkg.com/d3-svg-annotation@2"></script>
+    <style>
+        .chart-container {
+            margin: 20px;
+        }
+        .annotation-group {
+            font-size: 12px;
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: 120px;
+            height: auto;
+            padding: 5px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Create a div where the scatter plot will take place -->
+    <div id="scatterplot" class="chart-container"></div>
+    <!-- Create a div where the bar chart will take place -->
+    <div id="barchart" class="chart-container"></div>
+    <script>
+        d3.csv("https://leemhmark.github.io/data/sleep_dataset.csv").then(function(data) {
+            // Parse data
+            const parsedData = data.map(d => ({
+                personId: +d["Person ID"],
+                gender: d["Gender"].toLowerCase(),
+                age: +d["Age"],
+                occupation: d["Occupation"],
+                sleepDuration: +d["Sleep Duration"],
+                sleepQuality: +d["Quality of Sleep"],
+                physicalActivityLevel: +d["Physical Activity Level"],
+                stressLevel: +d["Stress Level"],
+                bmiCategory: d["BMI Category"],
+                bloodPressure: d["Blood Pressure"],
+                heartRate: +d["Heart Rate"],
+                dailySteps: +d["Daily Steps"],
+                sleepDisorder: d["Sleep Disorder"]
+            }));
+
+            // Debugging: Log the parsed data to console
+            console.log(parsedData);
+
+            // Render Scatter Plot for Scene 1
+            const scatterPlotObj = scatterPlot(parsedData, 'sleepDuration', 'sleepQuality', 'occupation', '#scatterplot');
+
+            // Render Bar Chart for Scene 1
+            const barChartObj = barChart(parsedData, '#barchart', scatterPlotObj);
+
+            // Add event listener to reset points and bars when clicking outside bars
+            document.body.addEventListener('click', function() {
+                scatterPlotObj.resetPoints();
+                barChartObj.resetBars();
+            });
+        }).catch(function(error) {
+            // Debugging: Log the error if the CSV fails to load
+            console.error('Error loading or parsing the CSV file:', error);
+        });
+
+        const scatterPlot = (data, xField, yField, colorField, elementId) => {
+            const svg = d3.select(elementId).append("svg").attr("width", 600).attr("height", 400);
+            const margin = { top: 20, right: 30, bottom: 60, left: 70 };
+            const width = svg.attr("width") - margin.left - margin.right;
+            const height = svg.attr("height") - margin.top - margin.bottom;
+
+            const x = d3.scaleLinear().domain([4, 10]).range([0, width]);
+            const y = d3.scaleLinear().domain([4, 10]).range([height, 0]);
+
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+            g.append("g").call(d3.axisLeft(y));
+            g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
+
+            // X Axis Label
+            svg.append("text")
+                .attr("transform", `translate(${margin.left + width / 2}, ${margin.top + height + 40})`)
+                .style("text-anchor", "middle")
+                .text("Sleep Duration (hours)");
+
+            // Y Axis Label
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", margin.left - 50)
+                .attr("x", - (margin.top + height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Sleep Quality (scale 0-10)");
+
+            // Define color scale for occupations
+            const colorScale = d3.scaleOrdinal(d3.schemeCategory10)
+                .domain([...new Set(data.map(d => d[colorField]))]);
+
+
+            const tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
+
+            const dots = g.selectAll(".dot")
+                .data(data)
+                .enter().append("circle")
+                .attr("class", "dot")
+                .attr("cx", d => x(d[xField]))
+                .attr("cy", d => y(d[yField]))
+                .attr("r", 5)
+                .style("fill", d => colorScale(d[colorField]))
+                .on("mouseover", function(event, d) {
+                    tooltip.transition().duration(200).style("opacity", .9);
+                    tooltip.html(`Person ID: ${d.personId}<br>Occupation: ${d.occupation}<br>Age: ${d.age}<br>Sleep Duration: ${d.sleepDuration}<br>Sleep Quality: ${d.sleepQuality}`)
+                           .style("left", (event.pageX + 5) + "px").style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function(d) {
+                    tooltip.transition().duration(500).style("opacity", 0);
+                });
+
+            // Raise circles to the front
+            dots.raise();
+
+            // Function to highlight points based on occupation
+            function highlightPoints(occupation) {
+                dots.transition().duration(200)
+                    .style("opacity", d => d.occupation === occupation ? 1 : 0.05);
+                if (occupation === 'Doctor') {
+                    d3.select("#annotation-occupation-scatter").style("display", null);
+                    d3.select("#annotation-sleep-duration").style("display", "none");
+                } else {
+                    d3.select("#annotation-occupation-scatter").style("display", "none");
+                    d3.select("#annotation-sleep-duration").style("display", null);
+                }
+            }
+
+            // Function to reset points opacity
+            function resetPoints() {
+                dots.transition().duration(200)
+                    .style("opacity", 1);
+                d3.select("#annotation-occupation-scatter").style("display", "none");
+                d3.select("#annotation-sleep-duration").style("display", null);
+            }
+
+            // Add legend
+            const legend = svg.append("g")
+                .attr("transform", `translate(${width + margin.left + 10}, ${margin.top})`);
+
+            const occupations = [...new Set(data.map(d => d[colorField]))];
+
+            occupations.forEach((occupation, i) => {
+                legend.append("circle")
+                    .attr("cx", 0)
+                    .attr("cy", i * 20)
+                    .attr("r", 5)
+                    .style("fill", colorScale(occupation));
+
+                legend.append("text")
+                    .attr("x", 10)
+                    .attr("y", i * 20 + 5)
+                    .text(occupation)
+                    .style("font-size", "12px")
+                    .attr("alignment-baseline","middle");
+            });
+
+            return { highlightPoints, resetPoints };
+        };
+
+        const barChart = (data, elementId, scatterPlotObj) => {
+            const svg = d3.select(elementId).append("svg").attr("width", 600).attr("height", 300);
+            const margin = { top: 20, right: 30, bottom: 60, left: 70 };
+            const width = svg.attr("width") - margin.left - margin.right;
+            const height = svg.attr("height") - margin.top - margin.bottom;
+
+            // Calculate average sleep quality and duration by occupation
+            const avgData = d3.rollup(data, v => ({
+                avgSleepQuality: d3.mean(v, d => d.sleepQuality),
+                avgSleepDuration: d3.mean(v, d => d.sleepDuration)
+            }), d => d.occupation);
+
+            const avgDataArray = Array.from(avgData, ([key, value]) => ({ key, ...value }));
+
+            const x = d3.scaleBand().domain(avgDataArray.map(d => d.key)).range([0, width]).padding(0.3);  // Increase padding for narrower bars
+            const y0 = d3.scaleLinear().domain([0, 10]).range([height, 0]); // Sleep quality scale
+            const y1 = d3.scaleLinear().domain([0, 10]).range([height, 0]); // Sleep duration scale
+
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+            g.append("g").call(d3.axisLeft(y0));
+            g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
+
+            const barWidth = x.bandwidth() / 3;  // Adjust bar width for narrower bars
+
+            
+
+            // Function to highlight bars based on occupation
+            function highlightBars(occupation) {
+                g.selectAll(".bar-quality")
+                    .transition().duration(200)
+                    .style("opacity", d => d.key === occupation ? 1 : 0.2);
+                g.selectAll(".bar-duration")
+                    .transition().duration(200)
+                    .style("opacity", d => d.key === occupation ? 1 : 0.2);
+            }
+
+            // Function to reset bars opacity
+            function resetBars() {
+                g.selectAll(".bar-quality")
+                    .transition().duration(200)
+                    .style("opacity", 1);
+                g.selectAll(".bar-duration")
+                    .transition().duration(200)
+                    .style("opacity", 1);
+            }
+
+            // Bar for average sleep quality
+            g.selectAll(".bar-quality")
+                .data(avgDataArray)
+                .enter().append("rect")
+                .attr("class", "bar-quality")
+                .attr("x", d => x(d.key))
+                .attr("y", d => y0(d.avgSleepQuality))
+                .attr("width", barWidth)
+                .attr("height", d => height - y0(d.avgSleepQuality))
+                .attr("fill", "#1f77b4")
+                .on("click", function(event, d) {
+                    event.stopPropagation(); // Prevent this event from bubbling up to the body
+                    scatterPlotObj.highlightPoints(d.key);
+                    highlightBars(d.key);
+                });
+
+            // Bar for average sleep duration
+            g.selectAll(".bar-duration")
+                .data(avgDataArray)
+                .enter().append("rect")
+                .attr("class", "bar-duration")
+                .attr("x", d => x(d.key) + barWidth + 5)  // Add space between the bars
+                .attr("y", d => y1(d.avgSleepDuration))
+                .attr("width", barWidth)
+                .attr("height", d => height - y1(d.avgSleepDuration))
+                .attr("fill", "#ff7f0e")
+                .on("click", function(event, d) {
+                    event.stopPropagation(); // Prevent this event from bubbling up to the body
+                    scatterPlotObj.highlightPoints(d.key);
+                    highlightBars(d.key);
+                });
+
+            // X Axis Label
+            svg.append("text")
+                .attr("transform", `translate(${margin.left + width / 2}, ${margin.top + height + 40})`)
+                .style("text-anchor", "middle")
+                .text("Gender");
+
+            // Y Axis Label
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", margin.left - 50)
+                .attr("x", - (margin.top + height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Average Sleep Duration and Quality");
+
+             // Add annotation to bar chart
+    const annotations = [
+        {
+            note: {
+                label: "Slightly higher sleep quality for females",
+                
+            },
+            type: d3.annotationCalloutRect,
+            subject: {
+                width: 150,
+                height: 50
+            },
+            x: x("female") + margin.left - 20,
+            y: y0(avgDataArray.find(d => d.key === "female").avgSleepQuality) + margin.top,
+            dy: -20,
+            dx: -20
+        }
+    ];
+
+    const makeAnnotations = d3.annotation()
+        .accessors({
+            x: function(d){ return d.x; },
+            y: function(d){ return d.y; }
+        })
+        .annotations(annotations);
+
+    svg.append("g")
+        .attr("class", "annotation-group")
+        .call(makeAnnotations);
+
+            // Legend
+            svg.append("rect").attr("x", width - 100).attr("y", 10).attr("width", 10).attr("height", 10).style("fill", "#1f77b4");
+            svg.append("text").attr("x", width - 85).attr("y", 20).text("Sleep Quality (0-10 scale)").style("font-size", "12px").attr("alignment-baseline","middle");
+            svg.append("rect").attr("x", width - 100).attr("y", 30).attr("width", 10).attr("height", 10).style("fill", "#ff7f0e");
+            svg.append("text").attr("x", width - 85).attr("y", 40).text("Sleep Duration (hours)").style("font-size", "12px").attr("alignment-baseline","middle");
+
+            return { highlightBars, resetBars };
+        };
+    </script>
+</body>
+</html>
