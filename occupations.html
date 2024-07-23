@@ -25,6 +25,9 @@
             border-radius: 8px;
             pointer-events: none;
         }
+        .hidden-annotation {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -66,6 +69,7 @@
                 if (!event.target.closest('.bar-quality') && !event.target.closest('.bar-duration') && !event.target.closest('.dot')) {
                     scatterPlotObj.resetPoints();
                     barChartObj.resetBars();
+                    d3.select("#annotation-nurse").style("display", "none");
                 }
             });
         }).catch(function(error) {
@@ -101,6 +105,38 @@
                 .attr("dy", "1em")
                 .style("text-anchor", "middle")
                 .text("Sleep Quality (scale 0-10)");
+
+            // Add annotations
+            const scatterAnnotations = [
+       
+                {
+                    note: {
+                        label: "Nurses have very high variations in sleep quality",
+                },
+                    x: x(6.5), // Adjust based on the position of Nurses
+                    y: y(7), // Adjust based on the position of Nurses
+                    dy: -50,
+                    dx: 50,
+                    id: "annotation-nurse",
+                    className: "hidden-annotation"
+                }
+            ];
+
+            const makeScatterAnnotations = d3.annotation()
+                .accessors({
+                    x: function(d){ return x(d.x) + margin.left; },
+                    y: function(d){ return y(d.y) + margin.top; }
+                })
+                .annotations(scatterAnnotations);
+
+            svg.append("g")
+                .attr("class", "annotation-group")
+                .call(makeScatterAnnotations);
+
+            // Ensure the annotation element has the correct ID and class
+            d3.selectAll(".annotation-group > g")
+                .attr("id", d => d.id)
+                .classed("hidden-annotation", d => d.className === "hidden-annotation");
 
             // Define color scale for occupations
             const colorScale = d3.scaleOrdinal(d3.schemeCategory10)
@@ -189,7 +225,7 @@
             const avgDataArray = Array.from(avgData, ([key, value]) => ({ key, ...value }));
 
             // Sort the data by decreasing sleep quality
-    avgDataArray.sort((a, b) => b.avgSleepQuality - a.avgSleepQuality);
+            avgDataArray.sort((a, b) => b.avgSleepQuality - a.avgSleepQuality);
 
             const x = d3.scaleBand().domain(avgDataArray.map(d => d.key)).range([0, width]).padding(0.3);  // Increase padding for narrower bars
             const y0 = d3.scaleLinear().domain([0, 10]).range([height, 0]); // Sleep quality scale
@@ -202,8 +238,7 @@
 
             const barWidth = x.bandwidth() / 3;  // Adjust bar width for narrower bars
 
-            
-
+        
             // Function to highlight bars based on occupation
             function highlightBars(occupation) {
                 g.selectAll(".bar-quality")
@@ -236,8 +271,25 @@
                 .attr("fill", "#1f77b4")
                 .on("click", function(event, d) {
                     event.stopPropagation(); // Prevent this event from bubbling up to the body
+                    console.log("Bar clicked:", d.key);
                     scatterPlotObj.highlightPoints(d.key);
                     highlightBars(d.key);
+                    const annotationElement = d3.select("#annotation-nurse");
+                    if (annotationElement.empty()) {
+                        console.error("Annotation element not found!");
+                        return;
+                    }
+                    console.log("Annotation element before:", annotationElement.node());
+                    console.log("Annotation classes before:", annotationElement.attr("class"));
+                    if (d.key.toLowerCase() === "nurse") { // Adjust toLowerCase if necessary
+                        console.log("Showing annotation");
+                        annotationElement.classed("hidden-annotation", false);
+                    } else {
+                        console.log("Hiding annotation");
+                        annotationElement.classed("hidden-annotation", true);
+                    }
+                    console.log("Annotation element after:", annotationElement.node());
+                    console.log("Annotation classes after:", annotationElement.attr("class"));
                 });
 
             // Bar for average sleep duration
@@ -252,8 +304,25 @@
                 .attr("fill", "#ff7f0e")
                 .on("click", function(event, d) {
                     event.stopPropagation(); // Prevent this event from bubbling up to the body
+                    console.log("Bar clicked:", d.key);
                     scatterPlotObj.highlightPoints(d.key);
                     highlightBars(d.key);
+                    const annotationElement = d3.select("#annotation-nurse");
+                    if (annotationElement.empty()) {
+                        console.error("Annotation element not found!");
+                        return;
+                    }
+                    console.log("Annotation element before:", annotationElement.node());
+                    console.log("Annotation classes before:", annotationElement.attr("class"));
+                    if (d.key.toLowerCase() === "nurse") { // Adjust toLowerCase if necessary
+                        console.log("Showing annotation");
+                        annotationElement.classed("hidden-annotation", false);
+                    } else {
+                        console.log("Hiding annotation");
+                        annotationElement.classed("hidden-annotation", true);
+                    }
+                    console.log("Annotation element after:", annotationElement.node());
+                    console.log("Annotation classes after:", annotationElement.attr("class"));
                 });
 
             // X Axis Label
