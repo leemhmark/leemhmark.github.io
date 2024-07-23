@@ -76,8 +76,19 @@
             const width = svg.attr("width") - margin.left - margin.right;
             const height = svg.attr("height") - margin.top - margin.bottom;
 
-            const x = d3.scaleLinear().domain([4, 10]).range([0, width]);
-            const y = d3.scaleLinear().domain([4, 10]).range([height, 0]);
+            // Calculate the min and max values for the x and y fields
+            const xExtent = d3.extent(data, d => d[xField]);
+            const yExtent = d3.extent(data, d => d[yField]);
+
+            // Adjust the extents by 0.5
+            const extent_adjust = 1.0
+            xExtent[0] -= extent_adjust;
+            xExtent[1] += extent_adjust;
+            yExtent[0] -= extent_adjust;
+            yExtent[1] += extent_adjust;
+
+            const x = d3.scaleLinear().domain(xExtent).range([0, width]);
+            const y = d3.scaleLinear().domain(yExtent).range([height, 0]);
 
             const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -107,13 +118,13 @@
                     },
                     type: d3.annotationCalloutRect,
                     subject: {
-                        width: 200,
+                        width: 230,
                         height: 140
                     },
                     x: x(6.5), // Use scale for positioning
                     y: y(8),
                     dy: -40,
-                    dx: -5
+                    dx: 0
                 }
             ];
 
@@ -168,7 +179,7 @@
             // Function to highlight points based on gender
             function highlightPoints(gender) {
                 dots.transition().duration(200)
-                    .style("opacity", d => d.gender === gender ? 1 : 0.05);
+                    .style("opacity", d => d.gender === gender ? 1 : 0);
             }
 
             // Function to reset points opacity
@@ -182,26 +193,26 @@
                 .attr("transform", `translate(${width + margin.left + 10}, ${margin.top})`);
 
             legend.append("circle")
-                .attr("cx", 0)
+                .attr("cx", -50)
                 .attr("cy", 0)
                 .attr("r", 5)
                 .style("fill", "#1f77b4");
 
             legend.append("text")
-                .attr("x", 10)
+                .attr("x", -40)
                 .attr("y", 5)
                 .text("Male")
                 .style("font-size", "12px")
                 .attr("alignment-baseline","middle");
 
             legend.append("circle")
-                .attr("cx", 0)
+                .attr("cx", -50)
                 .attr("cy", 20)
                 .attr("r", 5)
                 .style("fill", "#e377c2");
 
             legend.append("text")
-                .attr("x", 10)
+                .attr("x", -40)
                 .attr("y", 25)
                 .text("Female")
                 .style("font-size", "12px")
