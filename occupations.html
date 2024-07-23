@@ -79,8 +79,19 @@
             const width = svg.attr("width") - margin.left - margin.right;
             const height = svg.attr("height") - margin.top - margin.bottom;
 
-            const x = d3.scaleLinear().domain([4, 10]).range([0, width]);
-            const y = d3.scaleLinear().domain([4, 10]).range([height, 0]);
+            // Calculate the min and max values for the x and y fields
+            const xExtent = d3.extent(data, d => d[xField]);
+            const yExtent = d3.extent(data, d => d[yField]);
+
+            // Adjust the extents by 0.5
+            const extent_adjust = 1.0
+            xExtent[0] -= extent_adjust;
+            xExtent[1] += extent_adjust;
+            yExtent[0] -= extent_adjust;
+            yExtent[1] += extent_adjust;
+
+            const x = d3.scaleLinear().domain(xExtent).range([0, width]);
+            const y = d3.scaleLinear().domain(yExtent).range([height, 0]);
 
             const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -101,6 +112,39 @@
                 .attr("dy", "1em")
                 .style("text-anchor", "middle")
                 .text("Sleep Quality (scale 0-10)");
+
+            // Add annotation to the chart
+            const annotations = [
+                {
+                    note: {
+                        label: "Max range of sleep quality and durations for an occupation (nurse)",
+                    },
+                    type: d3.annotationCalloutRect,
+                    subject: {
+                        width: 455,
+                        height: 210
+                    },
+                    x: x(6.2), // Use scale for positioning
+                    y: y(8.85),
+                    dy: -5,
+                    dx: -5
+                }
+            ];
+
+            const makeAnnotations = d3.annotation()
+            .accessors({
+                x: function(d){ return x(d.x) + margin.left; },
+                y: function(d){ return y(d.y) + margin.top; }
+            })
+            .annotations(annotations);
+
+            const annotationGroup = svg.append("g")
+                .attr("class", "annotation-group")
+                .call(makeAnnotations);
+
+            // Set pointer-events to none for the annotations
+            annotationGroup.selectAll(".annotation")
+                .style("pointer-events", "none");
 
             // Define color scale for occupations
             const colorScale = d3.scaleOrdinal(d3.schemeCategory10)
@@ -132,14 +176,7 @@
             // Function to highlight points based on occupation
             function highlightPoints(occupation) {
                 dots.transition().duration(200)
-                    .style("opacity", d => d.occupation === occupation ? 1 : 0.05);
-                if (occupation === 'Doctor') {
-                    d3.select("#annotation-occupation-scatter").style("display", null);
-                    d3.select("#annotation-sleep-duration").style("display", "none");
-                } else {
-                    d3.select("#annotation-occupation-scatter").style("display", "none");
-                    d3.select("#annotation-sleep-duration").style("display", null);
-                }
+                    .style("opacity", d => d.occupation === occupation ? 1 : 0);
             }
 
             // Function to reset points opacity
@@ -189,7 +226,7 @@
             const avgDataArray = Array.from(avgData, ([key, value]) => ({ key, ...value }));
 
             // Sort the data by decreasing sleep quality
-    avgDataArray.sort((a, b) => b.avgSleepQuality - a.avgSleepQuality);
+            avgDataArray.sort((a, b) => b.avgSleepQuality - a.avgSleepQuality);
 
             const x = d3.scaleBand().domain(avgDataArray.map(d => d.key)).range([0, width]).padding(0.3);  // Increase padding for narrower bars
             const y0 = d3.scaleLinear().domain([0, 10]).range([height, 0]); // Sleep quality scale
