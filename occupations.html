@@ -188,6 +188,9 @@
 
             const avgDataArray = Array.from(avgData, ([key, value]) => ({ key, ...value }));
 
+            // Sort the data by decreasing sleep quality
+    avgDataArray.sort((a, b) => b.avgSleepQuality - a.avgSleepQuality);
+
             const x = d3.scaleBand().domain(avgDataArray.map(d => d.key)).range([0, width]).padding(0.3);  // Increase padding for narrower bars
             const y0 = d3.scaleLinear().domain([0, 10]).range([height, 0]); // Sleep quality scale
             const y1 = d3.scaleLinear().domain([0, 10]).range([height, 0]); // Sleep duration scale
