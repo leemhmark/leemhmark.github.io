@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+    <title>Scene 3: Age vs Sleep Quality and Duration</title>
+    <!-- Load d3.js -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .chart-container {
+            margin: 20px;
+        }
+        .annotation-group {
+            font-size: 12px;
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: 120px;
+            height: auto;
+            padding: 5px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Create a div where the scatter plot will take place -->
+    <div id="scatterplot" class="chart-container"></div>
+    <!-- Create a div where the line graph will take place -->
+    <div id="linegraph" class="chart-container"></div>
+    <script>
+        d3.csv("https://leemhmark.github.io/data/sleep_dataset.csv").then(function(data) {
+            // Parse data
+            const parsedData = data.map(d => ({
+                personId: +d["Person ID"],
+                gender: d["Gender"].toLowerCase(),
+                age: +d["Age"],
+                occupation: d["Occupation"],
+                sleepDuration: +d["Sleep Duration"],
+                sleepQuality: +d["Quality of Sleep"],
+                physicalActivityLevel: +d["Physical Activity Level"],
+                stressLevel: +d["Stress Level"],
+                bmiCategory: d["BMI Category"],
+                bloodPressure: d["Blood Pressure"],
+                heartRate: +d["Heart Rate"],
+                dailySteps: +d["Daily Steps"],
+                sleepDisorder: d["Sleep Disorder"]
+            }));
+
+            // Debugging: Log the parsed data to console
+            console.log(parsedData);
+
+            // Render Scatter Plot for Scene 3
+            renderScatterPlot(parsedData);
+
+            // Render Line Graph for Scene 3
+            renderLineGraph(parsedData);
+        }).catch(function(error) {
+            // Debugging: Log the error if the CSV fails to load
+            console.error('Error loading or parsing the CSV file:', error);
+        });
+
+        const renderScatterPlot = (data) => {
+            const svg = d3.select("#scatterplot").append("svg").attr("width", 600).attr("height", 400);
+            const margin = { top: 20, right: 30, bottom: 60, left: 70 };
+            const width = svg.attr("width") - margin.left - margin.right;
+            const height = svg.attr("height") - margin.top - margin.bottom;
+
+            // Calculate the min and max values for the x and y fields
+            const xExtent = d3.extent(data, d => d.sleepDuration);
+            const yExtent = d3.extent(data, d => d.sleepQuality);
+
+            // Adjust the extents by 0.5
+            xExtent[0] -= 0.5;
+            xExtent[1] += 0.5;
+            yExtent[0] -= 0.5;
+            yExtent[1] += 0.5;
+
+            const x = d3.scaleLinear().domain(xExtent).range([0, width]);
+            const y = d3.scaleLinear().domain(yExtent).range([height, 0]);
+
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+            g.append("g").call(d3.axisLeft(y));
+            g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
+
+            // X Axis Label
+            svg.append("text")
+                .attr("transform", `translate(${margin.left + width / 2}, ${margin.top + height + 40})`)
+                .style("text-anchor", "middle")
+                .text("Sleep Duration (hours)");
+
+            // Y Axis Label
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", margin.left - 50)
+                .attr("x", - (margin.top + height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Sleep Quality (scale 0-10)");
+
+            const tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
+
+            const colorScale = d3.scaleSequential(d3.interpolateViridis)
+                .domain(d3.extent(data, d => d.age));
+
+            const dots = g.selectAll(".dot")
+                .data(data)
+                .enter().append("circle")
+                .attr("class", "dot")
+                .attr("cx", d => x(d.sleepDuration))
+                .attr("cy", d => y(d.sleepQuality))
+                .attr("r", 5)
+                .style("fill", d => colorScale(d.age))
+                .on("mouseover", function(event, d) {
+                    tooltip.transition().duration(200).style("opacity", .9);
+                    tooltip.html(`Person ID: ${d.personId}<br>Age: ${d.age}<br>Occupation: ${d.occupation}<br>Sleep Duration: ${d.sleepDuration}<br>Sleep Quality: ${d.sleepQuality}`)
+                           .style("left", (event.pageX + 5) + "px").style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function(d) {
+                    tooltip.transition().duration(500).style("opacity", 0);
+                });
+
+            dots.raise();
+
+            // Add legend for age color scale
+            const legend = svg.append("g")
+                .attr("transform", `translate(${width + margin.left + 10}, ${margin.top})`);
+
+            const ageRange = d3.extent(data, d => d.age);
+            const legendHeight = 200;
+            const legendScale = d3.scaleSequential(d3.interpolateViridis)
+                .domain([legendHeight, 0]);
+
+            const legendAxis = d3.axisRight(d3.scaleLinear().domain([ageRange[1], ageRange[0]]).range([0, legendHeight]))
+                .ticks(6)
+                .tickSize(6)
+                .tickPadding(8);
+
+            legend.append("g")
+                .attr("class", "axis")
+                .attr("transform", `translate(30, 0)`)
+                .call(legendAxis);
+
+            legend.append("g")
+                .attr("transform", `translate(0,0)`)
+                .selectAll(".legend-bar")
+                .data(d3.range(legendHeight), function(d) { return d; })
+                .enter().append("rect")
+                .attr("x", 0)
+                .attr("y", function(d) { return d; })
+                .attr("width", 20)
+                .attr("height", 1)
+                .style("fill", function(d) { return legendScale(d); });
+
+            legend.append("text")
+                .attr("x", 0)
+                .attr("y", -10)
+                .text("Age")
+                .style("font-size", "12px")
+                .attr("alignment-baseline","middle");
+        };
+
+        const renderLineGraph = (data) => {
+            const svg = d3.select("#linegraph").append("svg").attr("width", 600).attr("height", 400);
+            const margin = { top: 20, right: 30, bottom: 60, left: 70 };
+            const width = svg.attr("width") - margin.left - margin.right;
+            const height = svg.attr("height") - margin.top - margin.bottom;
+
+            // Group data by age and calculate average sleep quality and duration
+            const avgData = d3.rollup(data, v => ({
+                avgSleepQuality: d3.mean(v, d => d.sleepQuality),
+                avgSleepDuration: d3.mean(v, d => d.sleepDuration)
+            }), d => d.age);
+
+            const avgDataArray = Array.from(avgData, ([key, value]) => ({ age: key, ...value }));
+
+            const x = d3.scaleLinear().domain(d3.extent(avgDataArray, d => d.age)).range([0, width]);
+            const y0 = d3.scaleLinear().domain([0, 10]).range([height, 0]); // Sleep quality scale
+            const y1 = d3.scaleLinear().domain([0, 10]).range([height, 0]); // Sleep duration scale
+
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+            g.append("g").call(d3.axisLeft(y0));
+            g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
+
+            // X Axis Label
+            svg.append("text")
+                .attr("transform", `translate(${margin.left + width / 2}, ${margin.top + height + 40})`)
+                .style("text-anchor", "middle")
+                .text("Age");
+
+            // Y Axis Label
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", margin.left - 50)
+                .attr("x", - (margin.top + height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Sleep Quality and Duration");
+
+            // Line for average sleep quality
+            const lineQuality = d3.line()
+                .x(d => x(d.age))
+                .y(d => y0(d.avgSleepQuality));
+
+            g.append("path")
+                .datum(avgDataArray)
+                .attr("fill", "none")
+                .attr("stroke", "#1f77b4")
+                .attr("stroke-width", 1.5)
+                .attr("d", lineQuality);
+
+            // Line for average sleep duration
+            const lineDuration = d3.line()
+                .x(d => x(d.age))
+                .y(d => y1(d.avgSleepDuration));
+
+            g.append("path")
+                .datum(avgDataArray)
+                .attr("fill", "none")
+                .attr("stroke", "#ff7f0e")
+                .attr("stroke-width", 1.5)
+                .attr("d", lineDuration);
+
+            // Legend
+            svg.append("rect").attr("x", width - 100).attr("y", 10).attr("width", 10).attr("height", 10).style("fill", "#1f77b4");
+            svg.append("text").attr("x", width - 85).attr("y", 20).text("Sleep Quality (0-10 scale)").style("font-size", "12px").attr("alignment-baseline","middle");
+            svg.append("rect").attr("x", width - 100).attr("y", 30).attr("width", 10).attr("height", 10).style("fill", "#ff7f0e");
+            svg.append("text").attr("x", width - 85).attr("y", 40).text("Sleep Duration (hours)").style("font-size", "12px").attr("alignment-baseline","middle");
+        };
+    </script>
+</body>
+</html>
