@@ -4,6 +4,8 @@
     <title>Scene 3: Age vs Sleep Quality and Duration</title>
     <!-- Load d3.js -->
     <script src="https://d3js.org/d3.v6.min.js"></script>
+    <!-- Load d3-annotation -->
+    <script src="https://unpkg.com/d3-svg-annotation@2.5.1"></script>
     <style>
         .chart-container {
             margin: 20px;
@@ -126,41 +128,74 @@
             dots.raise();
 
             // Add legend for age color scale
-            const legend = svg.append("g")
-                .attr("transform", `translate(${width + margin.left + 10}, ${margin.top})`);
-
             const ageRange = d3.extent(data, d => d.age);
             const legendHeight = 200;
-            const legendScale = d3.scaleSequential(d3.interpolateViridis)
-                .domain([legendHeight, 0]);
+            const legendWidth = 20;
+            const legendMargin = { top: 20, right: 30, bottom: 40, left: 70 };
 
-            const legendAxis = d3.axisRight(d3.scaleLinear().domain([ageRange[1], ageRange[0]]).range([0, legendHeight]))
+            // Create a linear gradient for the legend
+            const defs = svg.append("defs");
+            const linearGradient = defs.append("linearGradient")
+                .attr("id", "linear-gradient")
+                .attr("x1", "0%")
+                .attr("x2", "0%")
+                .attr("y1", "100%")
+                .attr("y2", "0%");
+
+            // Define the gradient stops
+            linearGradient.selectAll("stop")
+                .data(d3.range(0, 1.05, 0.05))
+                .enter().append("stop")
+                .attr("offset", d => `${d * 100}%`)
+                .attr("stop-color", d => d3.interpolateViridis(d));
+
+            // Draw the rectangle and fill with gradient
+            svg.append("rect")
+                .attr("x", width + margin.left -15)
+                .attr("y", margin.top + 10)
+                .attr("width", legendWidth)
+                .attr("height", legendHeight)
+                .style("fill", "url(#linear-gradient)");
+
+            // Create scale for legend
+            const legendScale = d3.scaleLinear()
+                .domain(ageRange)
+                .range([legendHeight, 0]);
+
+            // Create axis for legend
+            const legendAxis = d3.axisRight(legendScale)
                 .ticks(6)
                 .tickSize(6)
                 .tickPadding(8);
 
-            legend.append("g")
+            // Append axis to the legend
+            svg.append("g")
                 .attr("class", "axis")
-                .attr("transform", `translate(30, 0)`)
+                .attr("transform", `translate(${width + margin.left + legendWidth + 10}, ${margin.top})`)
                 .call(legendAxis);
 
-            legend.append("g")
-                .attr("transform", `translate(0,0)`)
-                .selectAll(".legend-bar")
-                .data(d3.range(legendHeight), function(d) { return d; })
-                .enter().append("rect")
-                .attr("x", 0)
-                .attr("y", function(d) { return d; })
-                .attr("width", 20)
-                .attr("height", 1)
-                .style("fill", function(d) { return legendScale(d); });
-
-            legend.append("text")
-                .attr("x", 0)
-                .attr("y", -10)
+            // Add title for legend
+            svg.append("text")
+                .attr("x", width + margin.left -15)
+                .attr("y", margin.top - 10)
                 .text("Age")
                 .style("font-size", "12px")
-                .attr("alignment-baseline","middle");
+                .attr("alignment-baseline", "middle");
+
+            // Add min and max age labels to the legend
+            svg.append("text")
+                .attr("x", width + margin.left + legendWidth - 15)
+                .attr("y", margin.top + legendHeight + 5)
+                .text('-' + ageRange[0])
+                .style("font-size", "12px")
+                .attr("alignment-baseline", "middle");
+
+            svg.append("text")
+                .attr("x", width + margin.left + legendWidth -15)
+                .attr("y", margin.top + 12)
+                .text('-' + ageRange[1])
+                .style("font-size", "12px")
+                .attr("alignment-baseline", "middle");
         };
 
         const renderLineGraph = (data) => {
@@ -224,6 +259,49 @@
                 .attr("stroke", "#ff7f0e")
                 .attr("stroke-width", 1.5)
                 .attr("d", lineDuration);
+
+            // Annotations for the line graph
+            const annotations = [
+                {
+                    note: {
+                        label: "People around age 35 have lowest sleep quality"
+                    },
+                    type: d3.annotationCalloutRect,
+                    subject: {
+                        width: 70,
+                        height: 70
+                    },
+                    x: x(36),
+                    y: y0(d3.min(avgDataArray, d => d.age === 35 ? d.avgSleepQuality : null))+60,
+                    dx: 50,
+                    dy: 110
+                },
+                {
+                    note: {
+                        label: "Surprisingly, people age 52+ have highest sleep quality"
+                    },
+                    type: d3.annotationCalloutRect,
+                    subject: {
+                        width: 100,
+                        height: 60
+                    },
+                    x: x(57),
+                    y: y0(d3.max(avgDataArray, d => d.age >= 52 ? d.avgSleepQuality : null))+15,
+                    dx: 10,
+                    dy: 110
+                }
+            ];
+
+            const makeAnnotations = d3.annotation()
+                .accessors({
+                    x: d => x(d.age),
+                    y: d => y0(d.avgSleepQuality)
+                })
+                .annotations(annotations);
+
+            svg.append("g")
+                .attr("class", "annotation-group")
+                .call(makeAnnotations);
 
             // Legend
             svg.append("rect").attr("x", width - 100).attr("y", 10).attr("width", 10).attr("height", 10).style("fill", "#1f77b4");
