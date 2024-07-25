@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="paragraph-container">
+    <div class="container">
         <p>Welcome to our exploration of how sleep quality and duration vary among different demographics. This dataset, which surveyed 374 participants, includes information on their gender, age, and occupations, as well as their reported sleep quality (on a scale of 0-10) and sleep duration (in hours). In this narrative visualization, we'll use scatter plots to display the sleep quality/ duration of individual participants and bar charts to show the average sleep quality/duration for each demographic group.</p>
         <p>First we look at sleep quality/duration vs gender. Females have slightly higher average sleep quality/duration compared to males, although both genders reported wide variance in reported sleep quality/duration. Additionally, there is a broad range of sleep duration for any given level of reported sleep quality. This indicates that people require vastly different amounts of sleep to achieve a particular level of sleep quality.</p>
         <p>Mouseover the dots for more details regarding a participant. Click on a bar to highlight all data for that gender.</p>
@@ -68,7 +68,7 @@
             const yExtent = d3.extent(data, d => d[yField]);
 
             // Adjust the extents by 0.5
-            const extent_adjust = 1.0
+            const extent_adjust = 0.5
             xExtent[0] -= extent_adjust;
             xExtent[1] += extent_adjust;
             yExtent[0] -= extent_adjust;
@@ -105,12 +105,12 @@
                     },
                     type: d3.annotationCalloutRect,
                     subject: {
-                        width: 230,
+                        width: 300,
                         height: 140
                     },
-                    x: x(6.5), // Use scale for positioning
+                    x: x(6.3), // Use scale for positioning
                     y: y(8),
-                    dy: -40,
+                    dy: -30,
                     dx: 0
                 }
             ];
