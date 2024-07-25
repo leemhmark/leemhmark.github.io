@@ -25,13 +25,27 @@
             border-radius: 8px;
             pointer-events: none;
         }
+        .button-container {
+            margin: 20px;
+        }
+        .button-container button {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <!-- Create a div where the scatter plot will take place -->
+    <div class="paragraph-container">
+        <p>Welcome to our exploration of how sleep quality and duration vary among different demographics. This dataset, which surveyed 374 participants, includes information on their gender, age, and occupations, as well as their reported sleep quality (on a scale of 0-10) and sleep duration (in hours). In this narrative visualization, we'll use scatter plots to display the sleep quality/ duration of individual participants and bar charts to show the average sleep quality/duration for each demographic group.</p>
+        <p>First we look at sleep quality/duration vs gender. Females have slightly higher average sleep quality/duration compared to males, although both genders reported wide variance in reported sleep quality/duration. Additionally, there is a broad range of sleep duration for any given level of reported sleep quality. This indicates that people require vastly different amounts of sleep to achieve a particular level of sleep quality.</p>
+        <p>Mouseover the dots for more details regarding a participant. Click on a bar to highlight all data for that gender.</p>
+    </div>
     <div id="scatterplot" class="chart-container"></div>
-    <!-- Create a div where the bar chart will take place -->
     <div id="barchart" class="chart-container"></div>
+    <div class="button-container">
+        <button onclick="window.location.href='occupations.html'">Next- occupations and sleep</button>
+    </div>
     <script>
         d3.csv("https://leemhmark.github.io/data/sleep_dataset.csv").then(function(data) {
             // Parse data
@@ -167,7 +181,7 @@
         .on("mouseover", function(event, d) {
             tooltip.transition().duration(200).style("opacity", .9);
             tooltip.html(`Person ID: ${d.personId}<br>Gender: ${d.gender}<br>Occupation: ${d.occupation}<br>Age: ${d.age}<br>Sleep Duration: ${d.sleepDuration}<br>Sleep Quality: ${d.sleepQuality}`)
-                   .style("left", (event.pageX + 5) + "px").style("top", (event.pageY - 28) + "px");
+                           .style("left", (event.pageX + 5) + "px").style("top", (event.pageY - 28) + "px");
         })
         .on("mouseout", function(d) {
             tooltip.transition().duration(500).style("opacity", 0);

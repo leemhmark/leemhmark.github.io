@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <head>
-    <title>Scene 2: Occupation vs Sleep Quality and Duration</title>
+    <title>Scene 2: Occupations and sleep</title>
     <!-- Load d3.js -->
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <!-- Load d3-annotation -->
@@ -25,13 +25,28 @@
             border-radius: 8px;
             pointer-events: none;
         }
+        .button-container {
+            margin: 20px;
+        }
+        .button-container button {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        
+        }
     </style>
 </head>
 <body>
-    <!-- Create a div where the scatter plot will take place -->
+    <div class="paragraph-container">
+        <p>Now we explores the relationship between occupations, sleep quality, and sleep duration. Engineers and lawyers have the best average sleep quality/duration out of all occupations, while scientists and sales representatives have the worst. However, most occupations have a wide variance in sleep quality/duration within. The highlighted area on the plot represents the highest variance observed for a single occupation (nurse, colored in purple). </p>
+        <p>Mouseover the dots for more details regarding a participant. Click on a bar to highlight all data for that occupation.</p>
+    </div>
     <div id="scatterplot" class="chart-container"></div>
-    <!-- Create a div where the bar chart will take place -->
     <div id="barchart" class="chart-container"></div>
+    <div class="button-container">
+        <button onclick="window.location.href='index.html'">Previous- gender and sleep</button>
+        <button onclick="window.location.href='age.html'">Next- age and sleep</button>
+    </div>
     <script>
         d3.csv("https://leemhmark.github.io/data/sleep_dataset.csv").then(function(data) {
             // Parse data
@@ -163,7 +178,7 @@
                 .style("fill", d => colorScale(d[colorField]))
                 .on("mouseover", function(event, d) {
                     tooltip.transition().duration(200).style("opacity", .9);
-                    tooltip.html(`Person ID: ${d.personId}<br>Occupation: ${d.occupation}<br>Age: ${d.age}<br>Sleep Duration: ${d.sleepDuration}<br>Sleep Quality: ${d.sleepQuality}`)
+                    tooltip.html(`Person ID: ${d.personId}<br>Gender: ${d.gender}<br>Occupation: ${d.occupation}<br>Age: ${d.age}<br>Sleep Duration: ${d.sleepDuration}<br>Sleep Quality: ${d.sleepQuality}`)
                            .style("left", (event.pageX + 5) + "px").style("top", (event.pageY - 28) + "px");
                 })
                 .on("mouseout", function(d) {

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <head>
-    <title>Scene 3: Age vs Sleep Quality and Duration</title>
+    <title>Scene 3: Age and sleep</title>
     <!-- Load d3.js -->
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <!-- Load d3-annotation -->
@@ -24,14 +24,30 @@
             border: 0px;
             border-radius: 8px;
             pointer-events: none;
+            .paragraph-container {
+            margin: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+        .button-container {
+            margin: 20px;
+        }
+        .button-container button {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <!-- Create a div where the scatter plot will take place -->
+    <div class="paragraph-container">
+        <p>Now we explores the relationship between age, sleep quality, and sleep duration. Notice that people around age 35 tend to have the lowest sleep quality, while those aged 52 and above have the highest sleep quality. The 3 oldest participants (59 years old, yellow dots in upper right corner) have some of the highest sleep quality and duration.</p>
+    </div>
     <div id="scatterplot" class="chart-container"></div>
-    <!-- Create a div where the line graph will take place -->
     <div id="linegraph" class="chart-container"></div>
+    <div class="button-container">
+        <button onclick="window.location.href='occupations.html'">Previous- occupations and sleep</button>
+    </div>
     <script>
         d3.csv("https://leemhmark.github.io/data/sleep_dataset.csv").then(function(data) {
             // Parse data
@@ -51,7 +67,6 @@
                 sleepDisorder: d["Sleep Disorder"]
             }));
 
-            // Debugging: Log the parsed data to console
             console.log(parsedData);
 
             // Render Scatter Plot for Scene 3
@@ -75,10 +90,11 @@
             const yExtent = d3.extent(data, d => d.sleepQuality);
 
             // Adjust the extents by 0.5
-            xExtent[0] -= 0.5;
-            xExtent[1] += 0.5;
-            yExtent[0] -= 0.5;
-            yExtent[1] += 0.5;
+            const extent_adjust = 0.5
+            xExtent[0] -= extent_adjust;
+            xExtent[1] += extent_adjust;
+            yExtent[0] -= extent_adjust;
+            yExtent[1] += extent_adjust;
 
             const x = d3.scaleLinear().domain(xExtent).range([0, width]);
             const y = d3.scaleLinear().domain(yExtent).range([height, 0]);
@@ -118,7 +134,7 @@
                 .style("fill", d => colorScale(d.age))
                 .on("mouseover", function(event, d) {
                     tooltip.transition().duration(200).style("opacity", .9);
-                    tooltip.html(`Person ID: ${d.personId}<br>Age: ${d.age}<br>Occupation: ${d.occupation}<br>Sleep Duration: ${d.sleepDuration}<br>Sleep Quality: ${d.sleepQuality}`)
+                    tooltip.html(`Person ID: ${d.personId}<br>Gender: ${d.gender}<br>Occupation: ${d.occupation}<br>Age: ${d.age}<br>Sleep Duration: ${d.sleepDuration}<br>Sleep Quality: ${d.sleepQuality}`)
                            .style("left", (event.pageX + 5) + "px").style("top", (event.pageY - 28) + "px");
                 })
                 .on("mouseout", function(d) {
