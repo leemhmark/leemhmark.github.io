@@ -269,6 +269,16 @@
                     event.stopPropagation(); // Prevent this event from bubbling up to the body
                     scatterPlotObj.highlightPoints(d.key);
                     highlightBars(d.key);
+                })
+                .on("mouseover", function(event, d) {
+                    d3.select(this)
+                        .attr("fill", "#3498db") // Change color on hover
+                        .attr("transform", `translate(0, -10)`); // Make the bars pop out 
+                })
+                .on("mouseout", function(event, d) {
+                    d3.select(this)
+                        .attr("fill", "#1f77b4") // Revert color
+                        .attr("transform", `translate(0, 0)`);
                 });
 
             // Bar for average sleep duration
@@ -285,6 +295,16 @@
                     event.stopPropagation(); // Prevent this event from bubbling up to the body
                     scatterPlotObj.highlightPoints(d.key);
                     highlightBars(d.key);
+                })
+                .on("mouseover", function(event, d) {
+                    d3.select(this)
+                        .attr("fill", "#ffbb78") // Change color on hover
+                        .attr("transform", `translate(0, -10)`);
+                })
+                .on("mouseout", function(event, d) {
+                    d3.select(this)
+                        .attr("fill", "#ff7f0e") // Revert color
+                        .attr("transform", `translate(0, 0)`);
                 });
 
             // X Axis Label
